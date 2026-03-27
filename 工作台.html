@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单通 · 工作台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --brand:       #00848A;
+      --brand-dark:  #006b6f;
+      --brand-light: #e6f6f6;
+      --navy:        #0d2137;
+      --navy-muted:  #1a3050;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+        'Microsoft YaHei UI', 'Segoe UI', sans-serif;
+      background: #f0f2f6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+    /* ── Sidebar ── */
+    .sidebar { background: var(--navy); }
+    .nav-item { transition: background .15s, color .15s; border-radius: 10px; }
+    .nav-item:hover { background: rgba(255,255,255,.08); }
+    .nav-item.active { background: var(--brand); }
+    .nav-sub { transition: background .15s; border-radius: 8px; }
+    .nav-sub:hover { background: rgba(255,255,255,.06); }
+
+    /* ── Brand helpers ── */
+    .bg-brand       { background: var(--brand) !important; }
+    .bg-brand-dark  { background: var(--brand-dark) !important; }
+    .bg-brand-light { background: var(--brand-light) !important; }
+    .text-brand     { color: var(--brand) !important; }
+    .border-brand   { border-color: var(--brand) !important; }
+    .hover-brand:hover { background: var(--brand-dark) !important; }
+
+    /* ── Cards ── */
+    .todo-card {
+      transition: box-shadow .2s, transform .2s, border-color .2s;
+      border: 2px solid transparent;
+    }
+    .todo-card:hover {
+      box-shadow: 0 4px 20px rgba(0,132,138,.13);
+      transform: translateY(-2px);
+    }
+    .kpi-card { transition: box-shadow .2s, transform .2s; }
+    .kpi-card:hover {
+      box-shadow: 0 6px 24px rgba(0,132,138,.14);
+      transform: translateY(-2px);
+    }
+
+    /* ── Quick icon ── */
+    .qicon-wrap { transition: background .15s; border-radius: 14px; }
+    .qicon-inner { transition: background .15s, color .15s; }
+    .qicon-wrap:hover .qicon-inner { background: var(--brand); }
+    .qicon-wrap:hover .qicon-inner i { color: #fff; }
+    .qicon-wrap:hover .qicon-label { color: var(--brand); }
+
+    /* ── Order table ── */
+    .order-row { transition: background .1s; }
+    .order-row:hover { background: #f5fefe; }
+
+    /* ── Tabs ── */
+    .otab { border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
+    .otab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 700; }
+    .otab:not(.active):hover { color: #374151; }
+    .dtab { transition: background .15s, color .15s; }
+
+    /* ── Pulse ── */
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
+    .pulse-dot { animation: pulse 2s ease-in-out infinite; }
+
+    /* ── Notification badge ── */
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+    .badge-pop { animation: pop 2.5s ease-in-out infinite; }
+  </style>
+</head>
+
+<body style="height:100vh;overflow:hidden;display:flex;">
+
+<!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+<aside class="sidebar flex flex-col flex-shrink-0" style="width:220px;height:100vh;">
+
+  <!-- Logo -->
+  <div class="flex items-center px-5 flex-shrink-0" style="height:56px;border-bottom:1px solid rgba(255,255,255,.07)">
+    <div class="bg-brand flex items-center justify-center mr-3 flex-shrink-0"
+         style="width:32px;height:32px;border-radius:10px;">
+      <i class="fa-solid fa-hotel text-white text-sm"></i>
+    </div>
+    <span class="text-white font-bold text-lg tracking-wide">订单通</span>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+
+    <!-- 商机 -->
+    <div>
+      <div class="nav-item flex items-center justify-between px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;">
+        <div class="flex items-center gap-3" style="color:rgba(255,255,255,.55);">
+          <i class="fa-solid fa-lightbulb text-sm" style="width:16px;text-align:center;"></i>
+          <span style="font-size:13px;">商机</span>
+        </div>
+        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:rgba(255,255,255,.3);"></i>
+      </div>
+      <div class="pl-3 mt-0.5 space-y-0.5">
+        <div class="nav-sub flex items-center gap-3 px-3 cursor-pointer" style="padding-top:8px;padding-bottom:8px;color:rgba(255,255,255,.45);font-size:12.5px;">
+          <i class="fa-solid fa-handshake" style="font-size:11px;width:16px;text-align:center;color:rgba(255,255,255,.25);"></i>商机合作
+        </div>
+        <div class="nav-sub flex items-center gap-3 px-3 cursor-pointer" style="padding-top:8px;padding-bottom:8px;color:rgba(255,255,255,.45);font-size:12.5px;">
+          <i class="fa-solid fa-building" style="font-size:11px;width:16px;text-align:center;color:rgba(255,255,255,.25);"></i>企业线索
+        </div>
+      </div>
+    </div>
+
+    <!-- 工作台 active -->
+    <div class="nav-item active flex items-center gap-3 px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;color:#fff;">
+      <i class="fa-solid fa-gauge-high text-sm" style="width:16px;text-align:center;"></i>
+      <span style="font-size:13px;font-weight:600;">工作台</span>
+      <span class="ml-auto flex items-center justify-center font-bold"
+            style="width:20px;height:20px;background:rgba(255,255,255,.2);border-radius:50%;font-size:11px;">3</span>
+    </div>
+
+    <!-- 产品管理 -->
+    <div class="nav-item flex items-center justify-between px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;color:rgba(255,255,255,.55);">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-box text-sm" style="width:16px;text-align:center;"></i>
+        <span style="font-size:13px;">产品管理</span>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="font-size:10px;color:rgba(255,255,255,.25);"></i>
+    </div>
+
+    <!-- 订单管理 -->
+    <div class="nav-item flex items-center justify-between px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;color:rgba(255,255,255,.55);">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-file-invoice text-sm" style="width:16px;text-align:center;"></i>
+        <span style="font-size:13px;">订单管理</span>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="font-size:10px;color:rgba(255,255,255,.25);"></i>
+    </div>
+
+    <!-- 数据报表 -->
+    <div class="nav-item flex items-center justify-between px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;color:rgba(255,255,255,.55);">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-chart-line text-sm" style="width:16px;text-align:center;"></i>
+        <span style="font-size:13px;">数据报表</span>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="font-size:10px;color:rgba(255,255,255,.25);"></i>
+    </div>
+
+    <!-- 房态管理 -->
+    <div class="nav-item flex items-center justify-between px-3 cursor-pointer" style="padding-top:10px;padding-bottom:10px;color:rgba(255,255,255,.55);">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-bed text-sm" style="width:16px;text-align:center;"></i>
+        <span style="font-size:13px;">房态管理</span>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="font-size:10px;color:rgba(255,255,255,.25);"></i>
+    </div>
+  </nav>
+
+  <!-- Hotel info -->
+  <div class="flex-shrink-0 p-4" style="border-top:1px solid rgba(255,255,255,.07)">
+    <div class="flex items-center gap-2.5 px-3 py-2.5"
+         style="background:var(--navy-muted);border-radius:12px;">
+      <div class="flex items-center justify-center flex-shrink-0"
+           style="width:32px;height:32px;background:rgba(0,132,138,.25);border-radius:8px;">
+        <i class="fa-solid fa-building-columns text-sm" style="color:var(--brand);"></i>
+      </div>
+      <div style="min-width:0;">
+        <div class="text-white truncate" style="font-size:12px;font-weight:500;">泰坦云大酒店</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35);">内部测试环境</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════ MAIN WRAPPER ═══════════════════════════ -->
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;">
+
+  <!-- TOP HEADER -->
+  <header class="bg-white flex items-center px-6 flex-shrink-0"
+          style="height:56px;border-bottom:1px solid #e8eaf0;box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2" style="font-size:13px;">
+      <span style="color:#9ca3af;">工作台</span>
+      <i class="fa-solid fa-chevron-right" style="font-size:10px;color:#d1d5db;"></i>
+      <span style="color:#374151;font-weight:500;">泰坦云大酒店</span>
+      <span style="font-size:11px;background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:2px 8px;border-radius:20px;">内部测试</span>
+    </div>
+    <!-- Right -->
+    <div class="ml-auto flex items-center gap-5">
+      <div class="flex items-center gap-1.5 cursor-pointer transition-colors"
+           style="font-size:12px;color:#9ca3af;" onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='#9ca3af'">
+        <i class="fa-solid fa-mobile-screen-button" style="font-size:15px;"></i><span>移动端</span>
+      </div>
+      <div class="flex items-center gap-1.5 cursor-pointer transition-colors"
+           style="font-size:12px;color:#9ca3af;" onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='#9ca3af'">
+        <i class="fa-solid fa-headset" style="font-size:15px;"></i><span>联系客服</span>
+      </div>
+      <div class="relative cursor-pointer" style="color:#9ca3af;"
+           onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='#9ca3af'">
+        <i class="fa-solid fa-bell" style="font-size:16px;"></i>
+        <span class="badge-pop absolute flex items-center justify-center text-white font-bold"
+              style="width:18px;height:18px;background:#ef4444;border-radius:50%;font-size:10px;top:-6px;right:-6px;">3</span>
+      </div>
+      <div class="flex items-center gap-2.5 cursor-pointer" style="padding-left:16px;border-left:1px solid #f3f4f6;">
+        <div class="bg-brand flex items-center justify-center"
+             style="width:32px;height:32px;border-radius:50%;">
+          <span class="text-white font-bold" style="font-size:12px;">I</span>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#374151;">ireve1710188</div>
+          <div style="font-size:11px;color:#9ca3af;">酒店管理员</div>
+        </div>
+        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#d1d5db;"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT ROW -->
+  <div style="flex:1;display:flex;overflow:hidden;min-height:0;">
+
+    <!-- ── MAIN SCROLL ── -->
+    <main style="flex:1;overflow-y:auto;padding:20px;min-width:0;">
+
+      <!-- ════ SECTION 1: 待办任务 ════ -->
+      <section style="margin-bottom:16px;">
+        <div class="flex items-center justify-between" style="margin-bottom:12px;">
+          <div class="flex items-center gap-2">
+            <div style="width:3px;height:16px;background:var(--brand);border-radius:2px;"></div>
+            <span style="font-size:13px;font-weight:700;color:#374151;">待处理订单</span>
+            <div class="flex items-center gap-1.5"
+                 style="background:#fef2f2;padding:2px 8px;border-radius:20px;">
+              <span class="pulse-dot" style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block;"></span>
+              <span style="font-size:11px;color:#ef4444;font-weight:500;">实时</span>
+            </div>
+          </div>
+          <span style="font-size:11px;color:#9ca3af;">点击卡片可快速跳转处理</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;">
+
+          <!-- 待处理 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#fef2f2;border-radius:10px;">
+                <i class="fa-solid fa-clock-rotate-left" style="color:#ef4444;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#ef4444;color:#fff;padding:2px 7px;border-radius:20px;font-weight:700;">紧急</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">16</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">待处理订单</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              立即处理 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 待确认 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#fffbeb;border-radius:10px;">
+                <i class="fa-solid fa-hourglass-half" style="color:#f59e0b;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#fef3c7;color:#d97706;padding:2px 7px;border-radius:20px;font-weight:600;">待确认</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">8</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">待确认订单</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              去确认 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 取消/修改 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#fff7ed;border-radius:10px;">
+                <i class="fa-solid fa-pen-to-square" style="color:#f97316;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#ffedd5;color:#ea580c;padding:2px 7px;border-radius:20px;font-weight:600;">需处理</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">8</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">取消/修改申请</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              去审核 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 待填入住 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#eff6ff;border-radius:10px;">
+                <i class="fa-solid fa-file-pen" style="color:#3b82f6;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#dbeafe;color:#2563eb;padding:2px 7px;border-radius:20px;font-weight:600;">待填写</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">20</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">待填入住明细</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              去填写 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 今日入住 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#f0fdf4;border-radius:10px;">
+                <i class="fa-solid fa-person-walking-arrow-right" style="color:#10b981;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#d1fae5;color:#059669;padding:2px 7px;border-radius:20px;font-weight:600;">今日</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">15</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">今日入住</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              去开票 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 今日新订 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#fdf4ff;border-radius:10px;">
+                <i class="fa-solid fa-bell-concierge" style="color:#a855f7;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#f3e8ff;color:#7c3aed;padding:2px 7px;border-radius:20px;font-weight:600;">今日</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">12</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">今日新订</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              去开票 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+          <!-- 全部订单 -->
+          <div class="todo-card bg-white rounded-xl cursor-pointer"
+               style="box-shadow:0 1px 4px rgba(0,0,0,.06);padding:12px;">
+            <div class="flex items-start justify-between" style="margin-bottom:8px;">
+              <div class="flex items-center justify-center"
+                   style="width:34px;height:34px;background:#f1f5f9;border-radius:10px;">
+                <i class="fa-solid fa-list-check" style="color:#64748b;font-size:13px;"></i>
+              </div>
+              <span style="font-size:10px;background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:20px;font-weight:600;">全部</span>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1;margin-bottom:4px;">128</div>
+            <div style="font-size:11px;color:#6b7280;font-weight:500;">全部订单</div>
+            <div class="flex items-center gap-1 text-brand" style="margin-top:8px;font-size:10px;font-weight:600;">
+              查看全部 <i class="fa-solid fa-arrow-right" style="font-size:9px;"></i>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ════ SECTION 2: 经营数据 ════ -->
+      <section style="margin-bottom:16px;">
+        <div class="flex items-center justify-between" style="margin-bottom:12px;">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <div style="width:3px;height:16px;background:var(--brand);border-radius:2px;"></div>
+              <span style="font-size:13px;font-weight:700;color:#374151;">经营数据</span>
+            </div>
+            <!-- Toggle -->
+            <div class="flex" style="background:#f1f3f6;border-radius:12px;padding:3px;gap:2px;">
+              <button id="dtab-today" class="dtab"
+                      style="padding:5px 14px;border-radius:9px;font-size:12px;background:var(--brand);color:#fff;font-weight:600;border:none;cursor:pointer;">今日数据</button>
+              <button id="dtab-month" class="dtab"
+                      style="padding:5px 14px;border-radius:9px;font-size:12px;color:#6b7280;background:transparent;border:none;cursor:pointer;">本月数据</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5" style="font-size:11px;color:#9ca3af;">
+            <i class="fa-solid fa-circle-info" style="color:#d1d5db;"></i>
+            数据截止至 2025-06-27 15:00，统计周期自今日零点起
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+
+          <!-- KPI 1 -->
+          <div class="kpi-card bg-white rounded-2xl p-4" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div class="flex items-center justify-between" style="margin-bottom:4px;">
+              <span style="font-size:12px;color:#9ca3af;font-weight:500;">预定订单数</span>
+              <i class="fa-solid fa-circle-question" style="font-size:11px;color:#e5e7eb;cursor:pointer;"></i>
+            </div>
+            <div style="font-size:30px;font-weight:800;color:#1f2937;line-height:1.1;margin-bottom:8px;">16</div>
+            <div class="flex items-center gap-1.5" style="margin-bottom:12px;">
+              <span class="flex items-center gap-1"
+                    style="font-size:11px;color:#10b981;font-weight:700;background:#d1fae5;padding:2px 7px;border-radius:20px;">
+                <i class="fa-solid fa-arrow-trend-up" style="font-size:10px;"></i>+60%
+              </span>
+              <span style="font-size:11px;color:#9ca3af;">较上周同期 10</span>
+            </div>
+            <div style="height:44px;"><canvas id="chart1"></canvas></div>
+          </div>
+
+          <!-- KPI 2 -->
+          <div class="kpi-card bg-white rounded-2xl p-4" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div class="flex items-center justify-between" style="margin-bottom:4px;">
+              <span style="font-size:12px;color:#9ca3af;font-weight:500;">预定间夜数</span>
+              <i class="fa-solid fa-circle-question" style="font-size:11px;color:#e5e7eb;cursor:pointer;"></i>
+            </div>
+            <div style="font-size:30px;font-weight:800;color:#1f2937;line-height:1.1;margin-bottom:8px;">20</div>
+            <div class="flex items-center gap-1.5" style="margin-bottom:12px;">
+              <span class="flex items-center gap-1"
+                    style="font-size:11px;color:#ef4444;font-weight:700;background:#fee2e2;padding:2px 7px;border-radius:20px;">
+                <i class="fa-solid fa-arrow-trend-down" style="font-size:10px;"></i>-40%
+              </span>
+              <span style="font-size:11px;color:#9ca3af;">较上周同期 30</span>
+            </div>
+            <div style="height:44px;"><canvas id="chart2"></canvas></div>
+          </div>
+
+          <!-- KPI 3 -->
+          <div class="kpi-card bg-white rounded-2xl p-4" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div class="flex items-center justify-between" style="margin-bottom:4px;">
+              <span style="font-size:12px;color:#9ca3af;font-weight:500;">预定销售额</span>
+              <i class="fa-solid fa-circle-question" style="font-size:11px;color:#e5e7eb;cursor:pointer;"></i>
+            </div>
+            <div style="font-size:24px;font-weight:800;color:#1f2937;line-height:1.1;margin-bottom:8px;">¥20,000</div>
+            <div class="flex items-center gap-1.5" style="margin-bottom:12px;">
+              <span class="flex items-center gap-1"
+                    style="font-size:11px;color:#10b981;font-weight:700;background:#d1fae5;padding:2px 7px;border-radius:20px;">
+                <i class="fa-solid fa-arrow-trend-up" style="font-size:10px;"></i>+60%
+              </span>
+              <span style="font-size:11px;color:#9ca3af;">较上周同期 ¥25,000</span>
+            </div>
+            <div style="height:44px;"><canvas id="chart3"></canvas></div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="kpi-card bg-white rounded-2xl p-4" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div class="flex items-center justify-between" style="margin-bottom:4px;">
+              <span style="font-size:12px;color:#9ca3af;font-weight:500;">预定成功率</span>
+              <i class="fa-solid fa-circle-question" style="font-size:11px;color:#e5e7eb;cursor:pointer;"></i>
+            </div>
+            <div style="font-size:30px;font-weight:800;color:#1f2937;line-height:1.1;margin-bottom:8px;">95%</div>
+            <div class="flex items-center gap-1.5" style="margin-bottom:12px;">
+              <span class="flex items-center gap-1"
+                    style="font-size:11px;color:#10b981;font-weight:700;background:#d1fae5;padding:2px 7px;border-radius:20px;">
+                <i class="fa-solid fa-arrow-trend-up" style="font-size:10px;"></i>+20%
+              </span>
+              <span style="font-size:11px;color:#9ca3af;">较上周同期 70%</span>
+            </div>
+            <div style="height:44px;"><canvas id="chart4"></canvas></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ════ SECTION 3: 待处理任务 ════ -->
+      <section style="margin-bottom:20px;">
+        <div class="flex items-center gap-2" style="margin-bottom:12px;">
+          <div style="width:3px;height:16px;background:var(--brand);border-radius:2px;"></div>
+          <span style="font-size:13px;font-weight:700;color:#374151;">待处理任务</span>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+
+        <!-- Tab bar -->
+        <div class="flex items-center" style="border-bottom:1px solid #f3f4f6;padding:0 20px;">
+          <button class="otab active py-3 px-4" style="font-size:13px;background:none;border:none;cursor:pointer;">
+            待处理订单
+            <span style="font-size:11px;background:#ef4444;color:#fff;padding:2px 7px;border-radius:20px;font-weight:700;margin-left:6px;">16</span>
+          </button>
+          <button class="otab py-3 px-4" style="font-size:13px;color:#9ca3af;background:none;border:none;cursor:pointer;">
+            待填入住明细
+            <span style="font-size:11px;background:#f3f4f6;color:#9ca3af;padding:2px 7px;border-radius:20px;margin-left:6px;">20</span>
+          </button>
+          <button class="otab py-3 px-4" style="font-size:13px;color:#9ca3af;background:none;border:none;cursor:pointer;">
+            待上传发票
+            <span style="font-size:11px;background:#f3f4f6;color:#9ca3af;padding:2px 7px;border-radius:20px;margin-left:6px;">5</span>
+          </button>
+          <div class="ml-auto flex items-center gap-3">
+            <button class="flex items-center gap-1" style="font-size:12px;color:#9ca3af;background:none;border:none;cursor:pointer;"
+                    onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='#9ca3af'">
+              <i class="fa-solid fa-filter" style="font-size:11px;"></i>筛选
+            </button>
+            <button class="flex items-center gap-1" style="font-size:12px;color:#9ca3af;background:none;border:none;cursor:pointer;"
+                    onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='#9ca3af'">
+              <i class="fa-solid fa-arrow-down-up-across-line" style="font-size:11px;"></i>排序
+            </button>
+          </div>
+        </div>
+
+        <!-- ── TAB PANEL 1: 待处理订单 ── -->
+        <div id="panel-1" class="tab-panel">
+          <div class="flex items-center gap-2" style="margin:12px 20px 8px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 14px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;font-size:13px;"></i>
+            <span style="font-size:12px;color:#991b1b;font-weight:500;">客户等待中，请及时处理</span>
+            <div class="flex items-center gap-1.5 ml-auto" style="font-size:11px;color:#9ca3af;">
+              <i class="fa-solid fa-arrow-down-up-across-line" style="font-size:10px;"></i>按通知时间排序
+            </div>
+          </div>
+          <div style="padding:0 20px 16px;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;min-width:680px;">
+              <thead>
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单号 / 下单时间</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">客户</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">入住人</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">产品信息</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">入离日期</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单金额</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单状态</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 0 10px 0;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508221629300167</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-14 23:57:56</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中国平安</div><div style="font-size:11px;color:#9ca3af;">单结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">张三</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">高级房套间</div><div style="font-size:11px;color:#9ca3af;">商旅协议价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-14</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-15</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 880.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;font-weight:600;">新建</span></td>
+                  <td style="padding:12px 0 12px 0;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508221629300168</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-15 09:02:11</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">华为技术</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">李四</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">豪华双床房</div><div style="font-size:11px;color:#9ca3af;">差旅专项价 / 不含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-15</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-17</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 1,560.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;font-weight:600;">新建</span></td>
+                  <td style="padding:12px 0 12px 0;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508221629300169</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-15 10:34:22</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中国平安</div><div style="font-size:11px;color:#9ca3af;">单结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">王五</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">行政套房</div><div style="font-size:11px;color:#9ca3af;">高管接待价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-16</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-18</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 3,200.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#fef3c7;color:#d97706;border:1px solid #fde68a;padding:3px 10px;border-radius:20px;font-weight:600;">待确认</span></td>
+                  <td style="padding:12px 0 12px 0;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508221629300170</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-15 11:55:03</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中国银行</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">陈工</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">标准大床房</div><div style="font-size:11px;color:#9ca3af;">银行专项价 / 不含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-15</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-18</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 1,980.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button></td>
+                </tr>
+                <tr class="order-row">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508221629300171</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-15 13:20:47</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中航集团</div><div style="font-size:11px;color:#9ca3af;">单结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">赵云</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">豪华大床房</div><div style="font-size:11px;color:#9ca3af;">航司协议价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-16</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-19</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 2,700.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:3px 10px;border-radius:20px;font-weight:600;">新建</span></td>
+                  <td style="padding:12px 0 12px 0;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between" style="padding:12px 20px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;">共 <strong style="color:#374151;">16</strong> 条记录，每页 5 条</span>
+            <div class="flex items-center gap-1">
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-left" style="font-size:11px;"></i></button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:var(--brand);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">1</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">2</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">3</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">4</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB PANEL 2: 待填入住明细 ── -->
+        <div id="panel-2" class="tab-panel" style="display:none;">
+          <div class="flex items-start gap-2" style="margin:12px 20px 8px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:9px 14px;">
+            <i class="fa-solid fa-circle-info" style="color:#f59e0b;font-size:13px;flex-shrink:0;margin-top:1px;"></i>
+            <span style="font-size:12px;color:#92400e;font-weight:500;line-height:1.6;">以下订单已过离店日期，待您确认准确的入住、离店时间，并尽快填写，以保证您的后续收款无误</span>
+            <div class="flex items-center gap-1.5 ml-auto flex-shrink-0" style="font-size:11px;color:#9ca3af;">
+              <i class="fa-solid fa-arrow-down-up-across-line" style="font-size:10px;"></i>按下单时间排序
+            </div>
+          </div>
+          <div style="padding:0 20px 16px;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;min-width:720px;">
+              <thead>
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单号 / 下单时间</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">客户</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">入住人</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">产品信息</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">入离日期</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单金额</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 14px 10px 0;">订单状态</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 0 10px 0;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508101629300201</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-10 14:23:05</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中国平安</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">刘敏</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">高级房套间</div><div style="font-size:11px;color:#9ca3af;">商旅协议价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-11</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-13 · 2晚</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 1,760.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button>
+                      <button style="font-size:12px;color:#f59e0b;font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#d97706'" onmouseout="this.style.color='#f59e0b'">填写明细</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508101629300202</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-10 16:08:43</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">华为技术</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">陈峰</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">标准大床房</div><div style="font-size:11px;color:#9ca3af;">差旅专项价 / 不含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-11</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-14 · 3晚</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 2,370.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button>
+                      <button style="font-size:12px;color:#f59e0b;font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#d97706'" onmouseout="this.style.color='#f59e0b'">填写明细</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508111629300215</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-11 09:17:30</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中国银行</div><div style="font-size:11px;color:#9ca3af;">单结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">吴磊</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">豪华双床房</div><div style="font-size:11px;color:#9ca3af;">银行专项价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-12</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-14 · 2晚</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 3,120.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button>
+                      <button style="font-size:12px;color:#f59e0b;font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#d97706'" onmouseout="this.style.color='#f59e0b'">填写明细</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508121629300228</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-12 11:44:58</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">中航集团</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">周浩</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">行政套房</div><div style="font-size:11px;color:#9ca3af;">航司协议价 / 含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-13</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-15 · 2晚</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 4,800.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button>
+                      <button style="font-size:12px;color:#f59e0b;font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#d97706'" onmouseout="this.style.color='#f59e0b'">填写明细</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="order-row">
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:var(--brand);font-weight:600;cursor:pointer;">HN2508121629300235</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">2025-08-12 15:29:14</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;font-weight:500;">国家电网</div><div style="font-size:11px;color:#9ca3af;">月结</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:12px;color:#374151;">杨洁</span></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">标准大床房</div><div style="font-size:11px;color:#9ca3af;">央企协议价 / 不含早</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:12px;color:#374151;">2025-08-13</div><div style="font-size:11px;color:#9ca3af;">至 2025-08-14 · 1晚</div></td>
+                  <td style="padding:12px 14px 12px 0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">¥ 980.00</div><div style="font-size:11px;color:#9ca3af;">应收</div></td>
+                  <td style="padding:12px 14px 12px 0;"><span style="font-size:11px;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:3px 10px;border-radius:20px;font-weight:600;">已确认</span></td>
+                  <td style="padding:12px 0 12px 0;">
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">进入订单</button>
+                      <button style="font-size:12px;color:#f59e0b;font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#d97706'" onmouseout="this.style.color='#f59e0b'">填写明细</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between" style="padding:12px 20px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;">共 <strong style="color:#374151;">20</strong> 条记录，每页 5 条</span>
+            <div class="flex items-center gap-1">
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-left" style="font-size:11px;"></i></button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:var(--brand);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">1</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">2</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">3</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;color:#6b7280;font-size:12px;cursor:pointer;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">4</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB PANEL 3: 待上传发票 ── -->
+        <div id="panel-3" class="tab-panel" style="display:none;">
+          <div class="flex items-start gap-2" style="margin:12px 20px 8px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:9px 14px;">
+            <i class="fa-solid fa-circle-info" style="color:#f59e0b;font-size:13px;flex-shrink:0;margin-top:1px;"></i>
+            <span style="font-size:12px;color:#92400e;font-weight:500;line-height:1.6;">以下订单已过离店日期，待您确认准确的入住、离店时间，并尽快填写，以保证您的后续收款无误</span>
+          </div>
+          <div style="padding:0 20px 16px;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;min-width:560px;">
+              <thead>
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 16px 10px 0;">客户所需开票信息</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 16px 10px 0;">待开票金额</th>
+                  <th style="text-align:left;font-size:11px;color:#9ca3af;font-weight:600;padding:10px 0 10px 0;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:14px 16px 14px 0;">
+                    <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;">中国平安财产保险股份有限公司</div>
+                    <div class="flex items-center gap-2" style="margin-bottom:5px;">
+                      <span style="font-size:11px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:6px;">专票</span>
+                      <span style="font-size:11px;font-weight:600;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 8px;border-radius:6px;">税点 6%</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:2px;"><span style="color:#9ca3af;">开票单位：</span>中国平安财产保险股份有限公司</div>
+                    <div style="font-size:11px;color:#6b7280;"><span style="color:#9ca3af;">税号：</span>91440000618723209T</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;"><div style="font-size:14px;font-weight:800;color:#1f2937;">¥ 12,480.00</div></td>
+                  <td style="padding:14px 0 14px 0;"><div style="display:flex;flex-direction:column;gap:5px;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">去开票</button><button style="font-size:12px;color:#6b7280;font-weight:500;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'"><i class="fa-solid fa-download" style="font-size:10px;margin-right:3px;"></i>导出明细</button></div></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:14px 16px 14px 0;">
+                    <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;">华为技术有限公司</div>
+                    <div class="flex items-center gap-2" style="margin-bottom:5px;">
+                      <span style="font-size:11px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:6px;">专票</span>
+                      <span style="font-size:11px;font-weight:600;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 8px;border-radius:6px;">税点 6%</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:2px;"><span style="color:#9ca3af;">开票单位：</span>华为技术有限公司</div>
+                    <div style="font-size:11px;color:#6b7280;"><span style="color:#9ca3af;">税号：</span>914403006226765437</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;"><div style="font-size:14px;font-weight:800;color:#1f2937;">¥ 8,340.00</div></td>
+                  <td style="padding:14px 0 14px 0;"><div style="display:flex;flex-direction:column;gap:5px;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">去开票</button><button style="font-size:12px;color:#6b7280;font-weight:500;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'"><i class="fa-solid fa-download" style="font-size:10px;margin-right:3px;"></i>导出明细</button></div></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:14px 16px 14px 0;">
+                    <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;">中国银行股份有限公司</div>
+                    <div class="flex items-center gap-2" style="margin-bottom:5px;">
+                      <span style="font-size:11px;font-weight:600;background:#f0fdf4;color:#059669;border:1px solid #a7f3d0;padding:2px 8px;border-radius:6px;">普票</span>
+                      <span style="font-size:11px;font-weight:600;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 8px;border-radius:6px;">税点 3%</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:2px;"><span style="color:#9ca3af;">开票单位：</span>中国银行股份有限公司</div>
+                    <div style="font-size:11px;color:#6b7280;"><span style="color:#9ca3af;">税号：</span>91100000100006029X</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;"><div style="font-size:14px;font-weight:800;color:#1f2937;">¥ 5,620.00</div></td>
+                  <td style="padding:14px 0 14px 0;"><div style="display:flex;flex-direction:column;gap:5px;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">去开票</button><button style="font-size:12px;color:#6b7280;font-weight:500;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'"><i class="fa-solid fa-download" style="font-size:10px;margin-right:3px;"></i>导出明细</button></div></td>
+                </tr>
+                <tr class="order-row" style="border-bottom:1px solid #f9fafb;">
+                  <td style="padding:14px 16px 14px 0;">
+                    <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;">中国航空集团有限公司</div>
+                    <div class="flex items-center gap-2" style="margin-bottom:5px;">
+                      <span style="font-size:11px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:6px;">专票</span>
+                      <span style="font-size:11px;font-weight:600;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 8px;border-radius:6px;">税点 6%</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:2px;"><span style="color:#9ca3af;">开票单位：</span>中国航空集团有限公司</div>
+                    <div style="font-size:11px;color:#6b7280;"><span style="color:#9ca3af;">税号：</span>9111000010000838XH</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;"><div style="font-size:14px;font-weight:800;color:#1f2937;">¥ 3,900.00</div></td>
+                  <td style="padding:14px 0 14px 0;"><div style="display:flex;flex-direction:column;gap:5px;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">去开票</button><button style="font-size:12px;color:#6b7280;font-weight:500;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'"><i class="fa-solid fa-download" style="font-size:10px;margin-right:3px;"></i>导出明细</button></div></td>
+                </tr>
+                <tr class="order-row">
+                  <td style="padding:14px 16px 14px 0;">
+                    <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;">国家电网有限公司</div>
+                    <div class="flex items-center gap-2" style="margin-bottom:5px;">
+                      <span style="font-size:11px;font-weight:600;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:2px 8px;border-radius:6px;">专票</span>
+                      <span style="font-size:11px;font-weight:600;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 8px;border-radius:6px;">税点 9%</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:2px;"><span style="color:#9ca3af;">开票单位：</span>国家电网有限公司</div>
+                    <div style="font-size:11px;color:#6b7280;"><span style="color:#9ca3af;">税号：</span>91100000726767G155</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;"><div style="font-size:14px;font-weight:800;color:#1f2937;">¥ 7,150.00</div></td>
+                  <td style="padding:14px 0 14px 0;"><div style="display:flex;flex-direction:column;gap:5px;"><button style="font-size:12px;color:var(--brand);font-weight:600;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='var(--brand-dark)'" onmouseout="this.style.color='var(--brand)'">去开票</button><button style="font-size:12px;color:#6b7280;font-weight:500;background:none;border:none;cursor:pointer;text-align:left;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'"><i class="fa-solid fa-download" style="font-size:10px;margin-right:3px;"></i>导出明细</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between" style="padding:12px 20px;border-top:1px solid #f3f4f6;">
+            <span style="font-size:12px;color:#9ca3af;">共 <strong style="color:#374151;">5</strong> 条记录，每页 5 条</span>
+            <div class="flex items-center gap-1">
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-left" style="font-size:11px;"></i></button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:var(--brand);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">1</button>
+              <button style="width:30px;height:30px;border-radius:8px;border:none;background:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'"><i class="fa-solid fa-chevron-right" style="font-size:11px;"></i></button>
+            </div>
+          </div>
+        </div>
+
+        </div>
+      </section>
+    </main>
+
+    <!-- ═══════════════════════════ RIGHT SIDEBAR ═══════════════════════════ -->
+    <aside class="bg-white flex flex-col flex-shrink-0 overflow-y-auto"
+           style="width:256px;border-left:1px solid #f3f4f6;">
+
+      <!-- 常用功能 -->
+      <div style="padding:16px;">
+        <div class="flex items-center justify-between" style="margin-bottom:12px;">
+          <div class="flex items-center gap-2">
+            <div style="width:3px;height:14px;background:var(--brand);border-radius:2px;"></div>
+            <span style="font-size:13px;font-weight:700;color:#374151;">常用功能</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:var(--brand-light);border-radius:14px;">
+              <i class="fa-solid fa-file-invoice" style="color:var(--brand);font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">订单管理</span>
+          </div>
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:#eff6ff;border-radius:14px;">
+              <i class="fa-solid fa-calendar-days" style="color:#3b82f6;font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">房态日历</span>
+          </div>
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:#f5f3ff;border-radius:14px;">
+              <i class="fa-solid fa-calendar-check" style="color:#7c3aed;font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">价格日历</span>
+          </div>
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:#fffbeb;border-radius:14px;">
+              <i class="fa-solid fa-credit-card" style="color:#f59e0b;font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">订单自助收款</span>
+          </div>
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:#f0fdf4;border-radius:14px;">
+              <i class="fa-solid fa-receipt" style="color:#10b981;font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">账单自助收款</span>
+          </div>
+
+          <div class="qicon-wrap flex flex-col items-center gap-1.5 cursor-pointer" style="padding:10px 4px;">
+            <div class="qicon-inner flex items-center justify-center"
+                 style="width:44px;height:44px;background:#fff1f2;border-radius:14px;">
+              <i class="fa-solid fa-file-arrow-up" style="color:#f43f5e;font-size:16px;"></i>
+            </div>
+            <span class="qicon-label" style="font-size:11px;color:#6b7280;text-align:center;line-height:1.3;">上传发票</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="margin:0 16px;border-top:1px solid #f3f4f6;"></div>
+
+      <!-- 商机合作 -->
+      <div style="padding:16px;flex:1;">
+        <div class="flex items-center gap-2" style="margin-bottom:12px;">
+          <div style="width:3px;height:14px;background:var(--brand);border-radius:2px;"></div>
+          <span style="font-size:13px;font-weight:700;color:#374151;">商机合作</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+
+          <button class="hover-brand flex items-center justify-between bg-brand w-full"
+                  style="padding:11px 16px;border-radius:12px;border:none;cursor:pointer;color:#fff;font-size:13px;font-weight:600;transition:background .15s;">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center"
+                   style="width:24px;height:24px;background:rgba(255,255,255,.18);border-radius:8px;">
+                <i class="fa-solid fa-gavel" style="font-size:11px;"></i>
+              </div>
+              协议客户投标
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size:11px;opacity:.7;"></i>
+          </button>
+
+          <button class="hover-brand flex items-center justify-between bg-brand w-full"
+                  style="padding:11px 16px;border-radius:12px;border:none;cursor:pointer;color:#fff;font-size:13px;font-weight:600;transition:background .15s;">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center"
+                   style="width:24px;height:24px;background:rgba(255,255,255,.18);border-radius:8px;">
+                <i class="fa-solid fa-link" style="font-size:11px;"></i>
+              </div>
+              商旅渠道
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size:11px;opacity:.7;"></i>
+          </button>
+
+          <!-- 红色加力 -->
+          <div style="border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#b91c1c,#7f1d1d);padding:14px;position:relative;">
+              <div class="flex items-center gap-2" style="margin-bottom:8px;">
+                <span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;">红色加力</span>
+                <span style="color:rgba(255,255,255,.65);font-size:11px;">商旅专享价</span>
+                <i class="fa-solid fa-circle-question" style="font-size:11px;color:rgba(255,255,255,.35);margin-left:auto;cursor:pointer;"></i>
+              </div>
+              <p style="color:rgba(255,255,255,.6);font-size:11px;line-height:1.6;margin-bottom:12px;">
+                红色加力只服务B端客户，包括：国央企、TMC、航司、银行、费控。可以帮助酒店获取更多B端新增流量，承诺不投放任何OTA渠道。
+              </p>
+              <button style="background:#fff;color:#b91c1c;font-size:12px;font-weight:700;padding:6px 18px;border-radius:8px;border:none;cursor:pointer;">
+                去开通
+              </button>
+              <!-- deco circles -->
+              <div style="position:absolute;right:12px;top:10px;width:50px;height:50px;background:rgba(255,255,255,.05);border-radius:50%;"></div>
+              <div style="position:absolute;right:20px;bottom:10px;width:30px;height:30px;background:rgba(255,255,255,.05);border-radius:50%;"></div>
+            </div>
+          </div>
+
+          <button class="hover-brand flex items-center justify-between bg-brand w-full"
+                  style="padding:11px 16px;border-radius:12px;border:none;cursor:pointer;color:#fff;font-size:13px;font-weight:600;transition:background .15s;">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center"
+                   style="width:24px;height:24px;background:rgba(255,255,255,.18);border-radius:8px;">
+                <i class="fa-solid fa-globe" style="font-size:11px;"></i>
+              </div>
+              网络与权益渠道
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size:11px;opacity:.7;"></i>
+          </button>
+
+          <button class="hover-brand flex items-center justify-between bg-brand w-full"
+                  style="padding:11px 16px;border-radius:12px;border:none;cursor:pointer;color:#fff;font-size:13px;font-weight:600;transition:background .15s;">
+            <div class="flex items-center gap-2.5">
+              <div class="flex items-center justify-center"
+                   style="width:24px;height:24px;background:rgba(255,255,255,.18);border-radius:8px;">
+                <i class="fa-solid fa-store" style="font-size:11px;"></i>
+              </div>
+              服务商
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size:11px;opacity:.7;"></i>
+          </button>
+
+        </div>
+      </div>
+
+    </aside>
+
+  </div><!-- end content row -->
+</div><!-- end main wrapper -->
+
+<!-- ═══════════════════════════ SCRIPTS ═══════════════════════════ -->
+<script>
+  // Sparkline helper
+  function sparkline(id, data, color, fillColor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new Chart(el, {
+      type: 'line',
+      data: {
+        labels: data.map((_, i) => i),
+        datasets: [{
+          data,
+          borderColor: color,
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: fillColor,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          tension: 0.45,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            mode: 'index',
+            intersect: false,
+            callbacks: { title: () => '', label: ctx => ' ' + ctx.raw },
+            backgroundColor: 'rgba(15,33,55,.88)',
+            padding: 7,
+            cornerRadius: 7,
+          }
+        },
+        scales: { x: { display: false }, y: { display: false } },
+        animation: { duration: 900, easing: 'easeInOutQuart' },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      }
+    });
+  }
+
+  sparkline('chart1', [8,10,7,12,9,13,16],           '#00848A', 'rgba(0,132,138,.10)');
+  sparkline('chart2', [32,29,26,24,22,21,20],         '#ef4444', 'rgba(239,68,68,.08)');
+  sparkline('chart3', [12000,14500,11200,17800,15000,18600,20000], '#00848A', 'rgba(0,132,138,.10)');
+  sparkline('chart4', [70,74,79,83,88,91,95],         '#10b981', 'rgba(16,185,129,.10)');
+
+  // 今日/本月 toggle
+  const dtToday = document.getElementById('dtab-today');
+  const dtMonth = document.getElementById('dtab-month');
+  function setDTab(on, off) {
+    on.style.cssText  = 'padding:5px 14px;border-radius:9px;font-size:12px;background:var(--brand);color:#fff;font-weight:600;border:none;cursor:pointer;';
+    off.style.cssText = 'padding:5px 14px;border-radius:9px;font-size:12px;color:#6b7280;background:transparent;border:none;cursor:pointer;';
+  }
+  dtToday.addEventListener('click', () => setDTab(dtToday, dtMonth));
+  dtMonth.addEventListener('click', () => setDTab(dtMonth, dtToday));
+
+  // 待处理任务 tabs
+  document.querySelectorAll('.otab').forEach((btn, idx) => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.otab').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      // 显示对应 panel
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('panel-' + (idx + 1));
+      if (panel) panel.style.display = 'block';
+    });
+  });
+</script>
+</body>
+</html>
